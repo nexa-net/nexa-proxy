@@ -60,5 +60,9 @@ fn bench_weighted_round_robin(c: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(benches, bench_select_upstream_n_routes, bench_weighted_round_robin);
+criterion_group!(
+    benches,
+    bench_select_upstream_n_routes,
+    bench_weighted_round_robin
+);
 criterion_main!(benches);

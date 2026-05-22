@@ -24,9 +24,9 @@ async fn spawn_backend(body_id: &'static str) -> SocketAddr {
             let (stream, _) = listener.accept().await.unwrap();
             tokio::spawn(async move {
                 let svc = service_fn(move |_req: Request<Incoming>| async move {
-                    Ok::<Response<Full<Bytes>>, Infallible>(
-                        Response::new(Full::new(Bytes::from(body_id))),
-                    )
+                    Ok::<Response<Full<Bytes>>, Infallible>(Response::new(Full::new(Bytes::from(
+                        body_id,
+                    ))))
                 });
                 let _ = http1::Builder::new()
                     .serve_connection(TokioIo::new(stream), svc)
@@ -109,8 +109,8 @@ async fn handle_req_via_state(
     let client = reqwest::Client::new();
     match client.get(&uri).send().await {
         Ok(resp) => {
-            let status =
-                hyper::StatusCode::from_u16(resp.status().as_u16()).unwrap_or(hyper::StatusCode::BAD_GATEWAY);
+            let status = hyper::StatusCode::from_u16(resp.status().as_u16())
+                .unwrap_or(hyper::StatusCode::BAD_GATEWAY);
             let body = resp.bytes().await.unwrap_or_default();
             Ok(Response::builder()
                 .status(status)
