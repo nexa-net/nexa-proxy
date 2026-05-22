@@ -7,6 +7,10 @@ license = "Apache-2.0"
 repository = "https://github.com/nexa-net/nexa-proxy"
 rust-version = "1.85"
 
+[lib]
+name = "nexa_proxy"
+path = "src/lib.rs"
+
 [[bin]]
 name = "nexa-proxy"
 path = "src/main.rs"
@@ -23,3 +27,6 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 anyhow = "1"
 clap = { version = "4", features = ["derive"] }
 reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] }
+
+[dev-dependencies]
+tokio = { version = "1", features = ["full"] }

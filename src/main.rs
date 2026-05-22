@@ -1,9 +1,7 @@
-mod config;
-mod proxy;
-
 use std::sync::Arc;
 
 use clap::Parser;
+use nexa_proxy::{config, proxy};
 use tracing::info;
 use tracing_subscriber::EnvFilter;
 
