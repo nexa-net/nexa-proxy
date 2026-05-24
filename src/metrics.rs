@@ -1,10 +1,18 @@
-use prometheus::{Encoder, HistogramOpts, HistogramVec, IntCounterVec, Opts, Registry, TextEncoder};
+use prometheus::{
+    Encoder, HistogramOpts, HistogramVec, IntCounterVec, Opts, Registry, TextEncoder,
+};
 
 pub struct ProxyPrometheusMetrics {
     registry: Registry,
     requests_total: IntCounterVec,
     request_duration: HistogramVec,
     errors_total: IntCounterVec,
+}
+
+impl Default for ProxyPrometheusMetrics {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl ProxyPrometheusMetrics {
@@ -33,7 +41,9 @@ impl ProxyPrometheusMetrics {
         .unwrap();
 
         registry.register(Box::new(requests_total.clone())).unwrap();
-        registry.register(Box::new(request_duration.clone())).unwrap();
+        registry
+            .register(Box::new(request_duration.clone()))
+            .unwrap();
         registry.register(Box::new(errors_total.clone())).unwrap();
 
         Self {
