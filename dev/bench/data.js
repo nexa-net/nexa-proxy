@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1779487266696,
+  "lastUpdate": 1779655733934,
   "repoUrl": "https://github.com/nexa-net/nexa-proxy",
   "entries": {
     "Benchmark": [
@@ -100,6 +100,60 @@ window.BENCHMARK_DATA = {
           {
             "name": "weighted_round_robin/upstreams/3",
             "value": 30,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "weighted_round_robin/upstreams/10",
+            "value": 34,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "nassime.abdiou@icloud.com",
+            "name": "Nassime Abdiou",
+            "username": "na2sime"
+          },
+          "committer": {
+            "email": "nassime.abdiou@icloud.com",
+            "name": "Nassime Abdiou",
+            "username": "na2sime"
+          },
+          "distinct": true,
+          "id": "315418481ab394241963e5f4fc75d097d1b17cfa",
+          "message": "style: fix clippy warning — add Default impl for ProxyPrometheusMetrics",
+          "timestamp": "2026-05-24T22:37:45+02:00",
+          "tree_id": "c59d9e527e2e873496cb13ea1db44310e55a857e",
+          "url": "https://github.com/nexa-net/nexa-proxy/commit/315418481ab394241963e5f4fc75d097d1b17cfa"
+        },
+        "date": 1779655733264,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "select_upstream/routes/10",
+            "value": 29,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "select_upstream/routes/100",
+            "value": 30,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "select_upstream/routes/1000",
+            "value": 30,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "weighted_round_robin/upstreams/3",
+            "value": 29,
             "range": "± 0",
             "unit": "ns/iter"
           },
