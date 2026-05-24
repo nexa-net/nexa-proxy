@@ -46,7 +46,7 @@ async fn spawn_proxy(config: ProxyConfig) -> SocketAddr {
     let listener = TcpListener::bind(listen).await.unwrap();
     let addr = listener.local_addr().unwrap();
 
-    let state = Arc::new(ProxyState::from_config(&config));
+    let state = Arc::new(ProxyState::from_config(&config, None));
 
     tokio::spawn(async move {
         // run_http binds its own listener, so we replicate the serve loop here

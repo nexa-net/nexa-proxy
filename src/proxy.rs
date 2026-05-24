@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
+use std::time::Instant;
 
 use http_body_util::Full;
 use hyper::body::{Bytes, Incoming};
@@ -11,9 +12,11 @@ use tokio::net::TcpListener;
 use tracing::{error, info};
 
 use crate::config::ProxyConfig;
+use crate::metrics::ProxyPrometheusMetrics;
 
 pub struct ProxyState {
     pub routes: HashMap<String, RouteState>,
+    pub metrics: Option<Arc<ProxyPrometheusMetrics>>,
 }
 
 pub struct RouteState {
@@ -27,7 +30,7 @@ pub struct WeightedUpstream {
 }
 
 impl ProxyState {
-    pub fn from_config(config: &ProxyConfig) -> Self {
+    pub fn from_config(config: &ProxyConfig, metrics: Option<Arc<ProxyPrometheusMetrics>>) -> Self {
         let mut routes = HashMap::new();
         for (domain, route_config) in &config.routes {
             let upstreams: Vec<WeightedUpstream> = route_config
@@ -46,7 +49,7 @@ impl ProxyState {
                 },
             );
         }
-        Self { routes }
+        Self { routes, metrics }
     }
 
     pub fn select_upstream(&self, domain: &str) -> Option<&str> {
@@ -102,6 +105,8 @@ async fn handle_request(
     req: Request<Incoming>,
     state: &ProxyState,
 ) -> std::result::Result<Response<Full<Bytes>>, hyper::Error> {
+    let start = Instant::now();
+
     let host = req
         .headers()
         .get("host")
@@ -111,9 +116,27 @@ async fn handle_request(
         .next()
         .unwrap_or("");
 
+    let domain = host.to_string();
+
+    // Intercept /metrics requests before proxying.
+    if req.uri().path() == "/metrics" {
+        let body = match &state.metrics {
+            Some(m) => m.encode(),
+            None => String::from("# metrics not enabled\n"),
+        };
+        return Ok(Response::builder()
+            .status(StatusCode::OK)
+            .header("content-type", "text/plain; version=0.0.4")
+            .body(Full::new(Bytes::from(body)))
+            .unwrap());
+    }
+
     let upstream = match state.select_upstream(host) {
         Some(addr) => addr.to_string(),
         None => {
+            if let Some(ref m) = state.metrics {
+                m.record_error(&domain, "no_upstream");
+            }
             return Ok(Response::builder()
                 .status(StatusCode::BAD_GATEWAY)
                 .body(Full::new(Bytes::from(
@@ -161,6 +184,10 @@ async fn handle_request(
                 .unwrap_or(StatusCode::BAD_GATEWAY);
             let body_bytes = upstream_resp.bytes().await.unwrap_or_default();
 
+            if let Some(ref m) = state.metrics {
+                m.record_request(&domain, status.as_u16(), start.elapsed().as_secs_f64());
+            }
+
             Ok(Response::builder()
                 .status(status)
                 .body(Full::new(body_bytes))
@@ -168,6 +195,11 @@ async fn handle_request(
         }
         Err(e) => {
             error!(%upstream, %e, "upstream request failed");
+
+            if let Some(ref m) = state.metrics {
+                m.record_error(&domain, "upstream_error");
+            }
+
             Ok(Response::builder()
                 .status(StatusCode::BAD_GATEWAY)
                 .body(Full::new(Bytes::from(format!("upstream error: {e}"))))
@@ -214,7 +246,7 @@ mod tests {
                 ),
             ]),
         };
-        ProxyState::from_config(&config)
+        ProxyState::from_config(&config, None)
     }
 
     #[test]
@@ -253,7 +285,7 @@ mod tests {
             https_listen: None,
             routes: HashMap::new(),
         };
-        let state = ProxyState::from_config(&config);
+        let state = ProxyState::from_config(&config, None);
         assert!(state.routes.is_empty());
     }
 }

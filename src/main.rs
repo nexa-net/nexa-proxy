@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use clap::Parser;
-use nexa_proxy::{config, proxy};
+use nexa_proxy::{config, metrics, proxy};
 use tracing::info;
 use tracing_subscriber::EnvFilter;
 
@@ -26,7 +26,8 @@ async fn main() -> anyhow::Result<()> {
     let config = config::ProxyConfig::load(std::path::Path::new(&cli.config))?;
     info!(http = %config.http_listen, "loaded proxy config with {} routes", config.routes.len());
 
-    let state = Arc::new(proxy::ProxyState::from_config(&config));
+    let prom = Arc::new(metrics::ProxyPrometheusMetrics::new());
+    let state = Arc::new(proxy::ProxyState::from_config(&config, Some(prom)));
 
     proxy::run_http(&config.http_listen, state).await
 }
